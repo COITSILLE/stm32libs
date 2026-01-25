@@ -150,6 +150,12 @@ void OLED_SetPicture(uint8_t* picture, uint8_t width, uint8_t height, pointer* p
 }
 
 //complex edit GRAM functions
+//complex edit GRAM functions
+/**
+ * @brief Set a string on the OLED screen
+ * @attention string must consist of ascii numbers, alphabets, symbols, spaces, while
+              only "\n" is supported
+*/
 void OLED_SetString(const char* string, pointer* ptr, const Font *font, uint8_t rspacing, uint8_t cspacing, uint8_t backpointer){
     uint8_t width_r = font->width * 8;
     uint8_t scale = font->height * font->width;
@@ -162,17 +168,18 @@ void OLED_SetString(const char* string, pointer* ptr, const Font *font, uint8_t 
     uint8_t x_0 = ptr->x;
     uint8_t y_0 = ptr->y;
     
-    
     if ((len * (width_r - rspc_offset)) > (OLED_ROW * (OLED_COL * 8 / (font->height - cspc_offset)))){
         return;
     }
 
     for (uint8_t i = 0; i < len; i++){
+        if (string[i] != '\n'){
+            OLED_SetPicture(font->letter + ((uint8_t)string[i] - 32) * scale, 
+                    font->width, font->height, ptr);
+            ptr->x += width_r - rspc_offset;
+        }
         
-        OLED_SetPicture(font->letter + ((uint8_t)string[i] - 32) * scale, 
-                font->width, font->height, ptr);
-        ptr->x += width_r - rspc_offset;
-        if (ptr->x + width_r > OLED_ROW){
+        if (ptr->x + width_r - rspc_offset > OLED_ROW || string[i + 1] == '\n'){
             ptr->x = x_0;
             ptr->y += font->height - cspc_offset;
         }
@@ -183,6 +190,6 @@ void OLED_SetString(const char* string, pointer* ptr, const Font *font, uint8_t 
         ptr->y = y_0;
     }
 }
-//show
+
 
 
