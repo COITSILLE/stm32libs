@@ -1,14 +1,8 @@
 #include "oled.h"
-#include "main.h"
-#include "stm32f103xb.h"
-#include "stm32f1xx_hal.h"
-#include "stm32f1xx_hal_def.h"
-#include "stm32f1xx_hal_gpio.h"
 #include <stdint.h>
 #include <string.h>
 #include "font.h"
 #include "math.h"
-#include "stm32f1xx_hal_i2c.h"
 
 #define I2C_Channel &hi2c1
 
@@ -149,7 +143,6 @@ void OLED_SetPicture(uint8_t* picture, uint8_t width, uint8_t height, pointer* p
     }
 }
 
-//complex edit GRAM functions
 //complex edit GRAM functions
 /**
  * @brief Set a string on the OLED screen
