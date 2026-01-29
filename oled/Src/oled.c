@@ -6,10 +6,7 @@
 
 #define I2C_Channel &hi2c1
 
-#define OLED_ROW 128
-#define OLED_COL 8
 
-#define MAX_POINTERS 4
 
 uint8_t _DMA_Mode = 0;
 
@@ -101,13 +98,6 @@ void OLED_ShowFrame(){
 }
 
 //basic edit GRAM functions
-typedef struct{
-    uint8_t x;
-    uint8_t y;
-}pointer;
-
-pointer ptr[MAX_POINTERS] = {};
-
 /**
  * @brief Set a pixel in the GRAM buffer
  * @param x Range 0-127(GRAM[][x]), begins at top left
@@ -121,17 +111,6 @@ void OLED_SetPixel(uint8_t x, uint8_t y, uint8_t state){
     GRAM[y / 8][x] |= (state << (y % 8));
 }
 
-void OLED_SetPointer(uint8_t x, uint8_t y, uint8_t seq){
-    ptr[seq].x = x;
-    ptr[seq].y = y;
-}
-
-void OLED_ClearAllPointer(){
-    for (int i = 0; i < (sizeof(ptr) / 2); i++){
-        ptr[i].x = 0;
-        ptr[i].y = 0;
-    }
-}
 /**
  * @brief Display a monochrome bitmap on the OLED screen
  * 
@@ -144,11 +123,11 @@ void OLED_ClearAllPointer(){
  * @param height Height of the bitmap in pixels (number of rows)
  * @param ptrseq Index of the position pointer in the ptr array
  */
-void OLED_SetPicture(uint8_t* picture, uint8_t width, uint8_t height, uint8_t ptrseq){
+void OLED_SetPicture(uint8_t* picture, uint8_t width, uint8_t height, pointer* ptr){
     uint8_t width_r = width * 8;
     uint8_t scale = height * width;
     
-    if (width_r + ptr[ptrseq].x > OLED_ROW || height + ptr[ptrseq].y > (OLED_COL * 8)) {
+    if (width_r + ptr->x > OLED_ROW || height + ptr->y > (OLED_COL * 8)) {
         return;
     }
 
@@ -159,7 +138,7 @@ void OLED_SetPicture(uint8_t* picture, uint8_t width, uint8_t height, uint8_t pt
         
         for (uint8_t bit = 0; bit < 8; bit++) {
             uint8_t value = (byte >> bit & 0x01);
-            OLED_SetPixel(ptr[ptrseq].x + x_offset + bit, ptr[ptrseq].y + y_offset, value);
+            OLED_SetPixel(ptr->x + x_offset + bit, ptr->y + y_offset, value);
         }
     }
 }
@@ -170,7 +149,7 @@ void OLED_SetPicture(uint8_t* picture, uint8_t width, uint8_t height, uint8_t pt
  * @attention string must consist of ascii numbers, alphabets, symbols, spaces, while
               only "\n" is supported
 */
-void OLED_SetString(const char* string, uint8_t ptrseq, const Font *font, uint8_t rspacing, uint8_t cspacing, uint8_t backpointer){
+void OLED_SetString(const char* string, pointer* ptr, const Font *font, uint8_t rspacing, uint8_t cspacing, uint8_t backpointer){
     uint8_t width_r = font->width * 8;
     uint8_t scale = font->height * font->width;
 
@@ -179,8 +158,8 @@ void OLED_SetString(const char* string, uint8_t ptrseq, const Font *font, uint8_
 
     uint8_t len = strlen(string);
     
-    uint8_t x_0 = ptr[ptrseq].x;
-    uint8_t y_0 = ptr[ptrseq].y;
+    uint8_t x_0 = ptr->x;
+    uint8_t y_0 = ptr->y;
     
     if ((len * (width_r - rspc_offset)) > (OLED_ROW * (OLED_COL * 8 / (font->height - cspc_offset)))){
         return;
@@ -189,20 +168,21 @@ void OLED_SetString(const char* string, uint8_t ptrseq, const Font *font, uint8_
     for (uint8_t i = 0; i < len; i++){
         if (string[i] != '\n'){
             OLED_SetPicture(font->letter + ((uint8_t)string[i] - 32) * scale, 
-                    font->width, font->height, ptrseq);
-            ptr[ptrseq].x += width_r - rspc_offset;
+                    font->width, font->height, ptr);
+            ptr->x += width_r - rspc_offset;
         }
         
-        if (ptr[ptrseq].x + width_r - rspc_offset > OLED_ROW || string[i + 1] == '\n'){
-            ptr[ptrseq].x = x_0;
-            ptr[ptrseq].y += font->height - cspc_offset;
+        if (ptr->x + width_r - rspc_offset > OLED_ROW || string[i + 1] == '\n'){
+            ptr->x = x_0;
+            ptr->y += font->height - cspc_offset;
         }
     }
 
     if (backpointer){
-        OLED_SetPointer(x_0, y_0, ptrseq);
+        ptr->x = x_0;
+        ptr->y = y_0;
     }
 }
-//show
+
 
 
