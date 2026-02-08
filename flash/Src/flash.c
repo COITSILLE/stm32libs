@@ -46,7 +46,7 @@ int Flash_WriteType(void *data, uint8_t type_size, uint16_t len, FLASHAddrs addr
     for (uint16_t i = 0; i < len; i++){
         uint64_t dataF = 0;
         for (uint8_t j = 0; j < type_size; j++){
-            dataF |= ((uint64_t)(pDataI[j + (i * type_size)]) << (j * 8));
+            dataF |= (uint64_t)pDataI[j + i * type_size] << (8 * j);
         }
         if (HAL_FLASH_Program(PROGRAM_LEN, page_addr + (i * read_size), dataF) != HAL_OK) {
             HAL_FLASH_Lock();
